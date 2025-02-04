@@ -3,6 +3,7 @@ import type React from "react"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { Sidebar } from "./Sidebar"
+import { FriendRequests } from "./FriendRequests"
 import { Button } from "@/components/ui/button"
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Groups
                   </Link>
                 </li>
+                <li>
+                  <Link href="/profile" className="text-gray-600 hover:text-gray-900">
+                    Profile
+                  </Link>
+                </li>
                 {session && (
                   <li>
                     <Button variant="outline" onClick={() => signOut()}>
@@ -43,7 +49,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4">{children}</main>
+        <main className="flex-1 overflow-auto p-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex">
+              <div className="w-3/4 pr-4">{children}</div>
+              <div className="w-1/4">
+                <FriendRequests />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   )

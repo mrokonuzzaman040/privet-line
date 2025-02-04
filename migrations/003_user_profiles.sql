@@ -1,4 +1,10 @@
+-- Up migration
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS bio TEXT,
 ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+-- Down migration
+ALTER TABLE users
+DROP COLUMN IF EXISTS avatar_url,
+DROP COLUMN IF EXISTS bio;
 
