@@ -13,12 +13,12 @@ export function Sidebar() {
   const { data: session } = useSession()
   const [searchTerm, setSearchTerm] = useState("")
 
-  if (!session) return null
+  if (!session || !session.user) return null
 
   return (
-    <div className="w-64 bg-white border-r h-full flex flex-col">
+    <div className="w-64 bg-white border-r h-full flex flex-col z-20">
       <div className="p-4 border-b">
-        <UserAvatar user={session.user} />
+        <UserAvatar user={session.user!} />
         <h2 className="mt-2 font-semibold">{session.user.name}</h2>
         <p className="text-sm text-gray-500">{session.user.email}</p>
       </div>

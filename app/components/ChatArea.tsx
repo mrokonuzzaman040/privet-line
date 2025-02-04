@@ -2,20 +2,9 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
-
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-    }
-  }
-}
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Paperclip, Mic } from "lucide-react"
+import { Send, Paperclip, Mic, Video, Phone } from "lucide-react"
 import io from "socket.io-client"
 import { UserAvatar } from "./UserAvatar"
 
@@ -31,16 +20,14 @@ interface Message {
 
 interface ChatAreaProps {
   recipientId: string
+  recipientName: string
   isGroup?: boolean
 }
 
 let socket: any
 
-export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
+export function ChatArea({ recipientId, recipientName, isGroup = false }: ChatAreaProps) {
   const { data: session } = useSession()
-  if (!session || !session.user) {
-    return null
-  }
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
@@ -86,7 +73,7 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
     try {
       const response = await fetch(`/api/messages?recipientId=${recipientId}`)
       const data = await response.json()
-      setMessages(data)
+      setMessages(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error("Error fetching messages:", error)
     }
@@ -167,20 +154,53 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
     // Implement stop recording and send audio message logic here
   }
 
+  const handleAudioCall = () => {
+    // Implement audio call logic
+    console.log("Audio call initiated")
+  }
+
+  const handleVideoCall = () => {
+    // Implement video call logic
+    console.log("Video call initiated")
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto p-4">
-        {messages.map((message) => (
+      <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-opacity-50 backdrop-filter backdrop-blur-lg">
+        <h2 className="text-xl font-semibold text-white">{recipientName}</h2>
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleAudioCall}
+            className="text-white hover:bg-white hover:bg-opacity-20"
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleVideoCall}
+            className="text-white hover:bg-white hover:bg-opacity-20"
+          >
+            <Video className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {messages?.map((message) => (
           <div
             key={message.id}
-            className={`flex mb-4 ${message.senderId === session?.user?.id ? "justify-end" : "justify-start"}`}
+            className={`flex mb-4 ${message.senderId === (session?.user as any)?.id ? "justify-end" : "justify-start"}`}
           >
             <div className="flex items-end">
-              {message.senderId !== session?.user?.id && <UserAvatar user={{ id: message.senderId }} />}
+              {message.senderId !== (session?.user as any)?.id && <UserAvatar user={{ id: message.senderId } as any} />}
               <div
                 className={`max-w-xs px-4 py-2 rounded-lg ${
-                  message.senderId === session?.user?.id ? "bg-blue-500 text-white" : "bg-gray-200"
-                }`}
+                  message.senderId === (session?.user as any)?.id
+                    ? "bg-blue-500 text-white ml-2"
+                    : "bg-gray-200 text-gray-800 mr-2"
+                } glass-effect`}
               >
                 {message.type === "text" && message.content}
                 {message.type === "image" && (
@@ -200,13 +220,18 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
           </div>
         ))}
         {isTyping && (
-          <div className="text-sm text-gray-500 italic">{isGroup ? "Someone is typing..." : "Typing..."}</div>
+          <div className="text-sm text-gray-400 italic">{isGroup ? "Someone is typing..." : "Typing..."}</div>
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t">
-        <div className="flex items-center">
-          <Button onClick={() => fileInputRef.current?.click()} variant="ghost" size="icon">
+      <div className="p-4 border-t border-gray-200 bg-opacity-50 backdrop-filter backdrop-blur-lg">
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white hover:bg-opacity-20"
+          >
             <Paperclip className="h-4 w-4" />
           </Button>
           <input
@@ -220,7 +245,7 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
             onClick={isRecording ? stopRecording : startRecording}
             variant="ghost"
             size="icon"
-            className={isRecording ? "text-red-500" : ""}
+            className={`text-white hover:bg-white hover:bg-opacity-20 ${isRecording ? "text-red-500" : ""}`}
           >
             <Mic className="h-4 w-4" />
           </Button>
@@ -232,9 +257,12 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
             onKeyPress={(e) => e.key === "Enter" && sendMessage(inputMessage, "text")}
             onFocus={handleTyping}
             onBlur={handleStopTyping}
-            className="flex-1 mx-2"
+            className="flex-1 bg-transparent text-white placeholder-gray-400 border-gray-600 focus:border-blue-500"
           />
-          <Button onClick={() => sendMessage(inputMessage, "text")}>
+          <Button
+            onClick={() => sendMessage(inputMessage, "text")}
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

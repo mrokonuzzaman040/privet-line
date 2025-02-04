@@ -36,7 +36,7 @@ export function GroupList({ searchTerm }: { searchTerm: string }) {
     ])
   }, [])
 
-  const filteredGroups = groups.filter((group) => group.name.toLowerCase().includes((searchTerm || "").toLowerCase()))
+  const filteredGroups = groups.filter((group) => group.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
     <div className="p-4">
