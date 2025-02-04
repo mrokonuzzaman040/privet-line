@@ -1,8 +1,7 @@
 const { sql } = require("@vercel/postgres")
 const fs = require("fs").promises
 const path = require("path")
-require('dotenv').config();
-console.log("POSTGRES_URL:", process.env.POSTGRES_URL);
+
 async function runMigration() {
   try {
     // Read the migration SQL file

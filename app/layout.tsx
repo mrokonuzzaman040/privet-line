@@ -1,9 +1,9 @@
-import './globals.css'
+import "./globals.css"
 import { Inter } from "next/font/google"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "./api/auth/[...nextauth]/route"
 import { SessionProvider } from "@/components/SessionProvider"
-import type React from "react" // Added import for React
+import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 

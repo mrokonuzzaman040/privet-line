@@ -11,7 +11,7 @@ interface Friend {
   image?: string
 }
 
-export function FriendList({ searchTerm }: { searchTerm: string }) {
+export function FriendList({ searchTerm = "" }: { searchTerm: string }) {
   const [friends, setFriends] = useState<Friend[]>([])
 
   useEffect(() => {
@@ -23,11 +23,13 @@ export function FriendList({ searchTerm }: { searchTerm: string }) {
     ])
   }, [])
 
-  const filteredFriends = friends.filter(
-    (friend) =>
-      friend.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredFriends = friends.filter((friend) => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return (
+      friend.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      friend.email.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  });
 
   return (
     <div className="p-4">

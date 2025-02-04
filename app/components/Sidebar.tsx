@@ -18,9 +18,9 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-white border-r h-full flex flex-col">
       <div className="p-4 border-b">
-        {session.user && <UserAvatar user={session.user} />}
-        <h2 className="mt-2 font-semibold">{session.user?.name}</h2>
-        <p className="text-sm text-gray-500">{session.user?.email}</p>
+        <UserAvatar user={session.user} />
+        <h2 className="mt-2 font-semibold">{session.user.name}</h2>
+        <p className="text-sm text-gray-500">{session.user.email}</p>
       </div>
       <div className="p-4 border-b">
         <div className="flex items-center mb-4">

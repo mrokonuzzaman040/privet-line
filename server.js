@@ -1,34 +1,49 @@
-const express = require( "express" )
-const http = require( "http" )
-const { Server } = require( "socket.io" )
+const express = require("express")
+const http = require("http")
+const { Server } = require("socket.io")
+const next = require("next")
 
-const app = express()
-// @ts-ignore
-const server = http.createServer( app )
-const io = new Server( server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: [ "GET", "POST" ],
-  },
-} )
+const dev = process.env.NODE_ENV !== "production"
+const app = next({ dev })
+const handle = app.getRequestHandler()
 
-io.on( "connection", ( socket ) => {
-  console.log( "a user connected" )
+app.prepare().then(() => {
+  const server = express()
+  const httpServer = http.createServer(server)
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"],
+    },
+  })
 
-  socket.on( "chat message", ( msg ) => {
-    io.emit( "chat message", msg )
-  } )
+  io.on("connection", (socket) => {
+    console.log("a user connected")
 
-  socket.on( "call signal", ( data ) => {
-    socket.broadcast.emit( "call signal", data )
-  } )
+    socket.on("chat message", (msg) => {
+      io.emit("chat message", msg)
+    })
 
-  socket.on( "disconnect", () => {
-    console.log( "user disconnected" )
-  } )
-} )
+    socket.on("typing", (data) => {
+      socket.broadcast.emit("typing", data)
+    })
 
-server.listen( 3001, () => {
-  console.log( "listening on *:3001" )
-} )
+    socket.on("stop typing", (data) => {
+      socket.broadcast.emit("stop typing", data)
+    })
+
+    socket.on("disconnect", () => {
+      console.log("user disconnected")
+    })
+  })
+
+  server.all("*", (req, res) => {
+    return handle(req, res)
+  })
+
+  httpServer.listen(3000, (err) => {
+    if (err) throw err
+    console.log("> Ready on http://localhost:3000")
+  })
+})
 

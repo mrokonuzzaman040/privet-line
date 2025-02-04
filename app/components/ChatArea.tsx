@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send } from "lucide-react"
+import io from "socket.io-client"
 
 interface Message {
   id: string
@@ -18,30 +19,55 @@ interface ChatAreaProps {
   isGroup?: boolean
 }
 
+let socket: any
+
 export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
   const { data: session } = useSession()
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Fetch messages from API
-    // This is a placeholder. Replace with actual API call.
-    setMessages([
-      { id: "1", content: "Hello!", senderId: session?.user?.id || "", createdAt: new Date() },
-      { id: "2", content: "Hi there!", senderId: recipientId, createdAt: new Date() },
-    ])
-  }, [recipientId, session?.user?.id])
+    socketInitializer()
+
+    return () => {
+      if (socket) socket.disconnect()
+    }
+  }, [])
+
+  const socketInitializer = async () => {
+    await fetch("/api/socket")
+    socket = io()
+
+    socket.on("connect", () => {
+      console.log("connected")
+    })
+
+    socket.on("chat message", (msg: Message) => {
+      setMessages((prevMessages) => [...prevMessages, msg])
+    })
+
+    socket.on("typing", (data: { senderId: string }) => {
+      if (data.senderId === recipientId) {
+        setIsTyping(true)
+      }
+    })
+
+    socket.on("stop typing", (data: { senderId: string }) => {
+      if (data.senderId === recipientId) {
+        setIsTyping(false)
+      }
+    })
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [])
+  }, [messagesEndRef])
 
   const sendMessage = () => {
     if (inputMessage.trim() === "") return
 
-    // Send message to API
-    // This is a placeholder. Replace with actual API call.
     const newMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
@@ -49,8 +75,18 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
       createdAt: new Date(),
     }
 
+    socket.emit("chat message", newMessage)
     setMessages([...messages, newMessage])
     setInputMessage("")
+    socket.emit("stop typing", { senderId: session?.user?.id })
+  }
+
+  const handleTyping = () => {
+    socket.emit("typing", { senderId: session?.user?.id })
+  }
+
+  const handleStopTyping = () => {
+    socket.emit("stop typing", { senderId: session?.user?.id })
   }
 
   return (
@@ -70,6 +106,9 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
             </div>
           </div>
         ))}
+        {isTyping && (
+          <div className="text-sm text-gray-500 italic">{isGroup ? "Someone is typing..." : "Typing..."}</div>
+        )}
         <div ref={messagesEndRef} />
       </div>
       <div className="p-4 border-t">
@@ -80,6 +119,8 @@ export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            onFocus={handleTyping}
+            onBlur={handleStopTyping}
             className="flex-1 mr-2"
           />
           <Button onClick={sendMessage}>
