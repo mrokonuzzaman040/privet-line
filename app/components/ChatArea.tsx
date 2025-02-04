@@ -2,6 +2,17 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
+  }
+}
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Paperclip, Mic } from "lucide-react"
@@ -27,6 +38,9 @@ let socket: any
 
 export function ChatArea({ recipientId, isGroup = false }: ChatAreaProps) {
   const { data: session } = useSession()
+  if (!session || !session.user) {
+    return null
+  }
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
